@@ -13,14 +13,10 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/claim/:token',
-      builder: (context, state) => ClaimScreen(
-        token: state.pathParameters['token']!,
-      ),
+      builder: (context, state) =>
+          ClaimScreen(token: state.pathParameters['token']!),
     ),
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const _LandingPage(),
-    ),
+    GoRoute(path: '/', builder: (context, state) => const _LandingPage()),
   ],
   errorBuilder: (context, state) => const _LandingPage(),
 );
@@ -49,23 +45,18 @@ class _LandingPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.local_cafe_rounded, size: 64, color: kOrange),
-            const SizedBox(height: 16),
-            Text(
-              'KOKONUTS',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 3,
-                    color: kOrange,
-                  ),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              child: Image.asset(
+                'assets/images/animated_logo.png',
+                height: 100,
+              ),
             ),
-            const SizedBox(height: 8),
             Text(
               'Loyalty Programme',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(color: Colors.grey),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
             ),
           ],
         ),

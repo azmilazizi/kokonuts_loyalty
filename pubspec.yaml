@@ -23,6 +23,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  assets:
+    - assets/images/animated_logo.png
+
   fonts:
     - family: FrankfurterStd
       fonts:
