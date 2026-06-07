@@ -198,20 +198,9 @@ class _ClaimScreenState extends State<ClaimScreen> {
   }
 
   Widget _buildLogo() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(Icons.local_cafe_rounded, color: kOrange, size: 26),
-        const SizedBox(width: 8),
-        Text(
-          'KOKONUTS',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: kOrange,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2.5,
-              ),
-        ),
-      ],
+    return Image.asset(
+      'assets/images/animated_logo.png',
+      height: 80,
     );
   }
 
