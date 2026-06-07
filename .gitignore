@@ -10,6 +10,8 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+/build/
+!/build/web/
 
 # IntelliJ related
 *.iml
