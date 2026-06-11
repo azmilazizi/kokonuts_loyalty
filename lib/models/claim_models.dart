@@ -39,3 +39,31 @@ class ClaimResult {
     );
   }
 }
+
+class RegistrationRequirement {
+  final String errorCode;
+  final List<String> requiredFields;
+  final bool needsConsent;
+
+  const RegistrationRequirement({
+    required this.errorCode,
+    required this.requiredFields,
+    required this.needsConsent,
+  });
+
+  bool get needsName => requiredFields.contains('name');
+  bool get needsBirthday => requiredFields.contains('birthday');
+
+  factory RegistrationRequirement.fromJson(Map<String, dynamic> json) {
+    return RegistrationRequirement(
+      errorCode: json['error'] as String? ?? 'needs_info',
+      requiredFields: List<String>.from(json['required_fields'] ?? []),
+      needsConsent: json['needs_consent'] as bool? ?? false,
+    );
+  }
+}
+
+class RegistrationRequiredException implements Exception {
+  final RegistrationRequirement requirement;
+  const RegistrationRequiredException(this.requirement);
+}

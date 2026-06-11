@@ -31,19 +31,35 @@ class LoyaltyApiService {
   }
 
   Future<ClaimResult> submitClaim(
-      String token, String name, String phone) async {
+    String token, {
+    required String phone,
+    String? name,
+    String? birthday,
+    bool? pdpaConsent,
+  }) async {
+    final body = <String, dynamic>{'phone': phone};
+    if (name != null && name.isNotEmpty) body['name'] = name;
+    if (birthday != null && birthday.isNotEmpty) body['birthday'] = birthday;
+    if (pdpaConsent != null) body['pdpa_consent'] = pdpaConsent;
+
     final response = await http.post(
       Uri.parse('$_baseUrl/claim/$token'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: jsonEncode({'name': name, 'phone': phone}),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       return ClaimResult.fromJson(json);
+    }
+
+    if (response.statusCode == 422) {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      throw RegistrationRequiredException(
+          RegistrationRequirement.fromJson(json));
     }
 
     throw ApiException(response.statusCode, response.body);
