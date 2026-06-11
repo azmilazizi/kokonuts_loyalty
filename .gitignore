@@ -10,7 +10,10 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-/build/
+# Ignore everything inside the build folder
+/build/*
+
+# Do NOT ignore the web folder
 !/build/web/
 
 # IntelliJ related
