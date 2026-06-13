@@ -54,5 +54,22 @@ ThemeData buildAppTheme() {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: Colors.white,
     ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: Colors.white,
+      indicatorColor: kOrangeBg,
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const IconThemeData(color: kOrange);
+        }
+        return IconThemeData(color: Colors.grey.shade500);
+      }),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const TextStyle(
+              color: kOrange, fontWeight: FontWeight.w600, fontSize: 12);
+        }
+        return TextStyle(color: Colors.grey.shade500, fontSize: 12);
+      }),
+    ),
   );
 }
