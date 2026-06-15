@@ -16,7 +16,7 @@ class AuthUser {
     final customer = data['customer'] as Map<String, dynamic>? ?? data;
     return AuthUser(
       token: data['token'] as String,
-      customerId: (customer['id'] as num).toInt(),
+      customerId: int.parse(customer['id'].toString()),
       phone: customer['phone'] as String? ?? '',
       name: customer['name'] as String?,
     );
@@ -44,7 +44,7 @@ class UserProfile {
     final data = (json['data'] as Map<String, dynamic>?) ?? json;
     final customer = data['customer'] as Map<String, dynamic>? ?? data;
     return UserProfile(
-      id: (customer['id'] as num?)?.toInt() ?? 0,
+      id: int.tryParse(customer['id'].toString()) ?? 0,
       phone: customer['phone'] as String? ?? '',
       name: customer['name'] as String?,
       birthday: customer['birthday'] as String?,
