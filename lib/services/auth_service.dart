@@ -42,7 +42,7 @@ class AuthService extends ChangeNotifier {
   Map<String, String> get _authHeaders => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    if (_token != null) 'Authorization': 'Bearer $_token',
+    if (_token != null) 'Authorization': 'Member $_token',
   };
 
   /// Register / claim account (first-time password set).
