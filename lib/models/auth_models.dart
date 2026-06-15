@@ -48,7 +48,7 @@ class UserProfile {
       phone: customer['phone'] as String? ?? '',
       name: customer['name'] as String?,
       birthday: customer['birthday'] as String?,
-      totalPoints: (customer['total_points'] as num?)?.toDouble() ?? 0.0,
+      totalPoints: double.tryParse(customer['total_points']?.toString() ?? '') ?? 0.0,
       tier: customer['tier'] as String?,
     );
   }
