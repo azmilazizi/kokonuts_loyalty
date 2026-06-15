@@ -88307,7 +88307,7 @@ q=A.r(q,q)
 q.m(0,"Content-Type",r)
 q.m(0,"Accept",r)
 s=this.a
-if(s!=null)q.m(0,"Authorization","Bearer "+s)
+if(s!=null)q.m(0,"Authorization","Member "+s)
 return q},
 oX(a,b){return this.atj(a,b)},
 atj(a,b){var s=0,r=A.L(t.H),q,p=this,o,n,m,l
