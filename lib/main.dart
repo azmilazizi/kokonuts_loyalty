@@ -5,7 +5,6 @@ import 'screens/claim_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/main_shell.dart';
-import 'screens/home/home_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'screens/loyalty/coming_soon_screen.dart';
@@ -57,7 +56,12 @@ final _router = GoRouter(
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/home',
-            builder: (context, state) => const HomeScreen(),
+            builder: (context, state) => const ComingSoonScreen(
+              icon: Icons.home_outlined,
+              title: 'Home',
+              description:
+                  'Your cashback dashboard is being upgraded. Check back soon for a better experience!',
+            ),
           ),
         ]),
         StatefulShellBranch(routes: [
