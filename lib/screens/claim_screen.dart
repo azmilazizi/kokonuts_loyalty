@@ -97,10 +97,7 @@ class _ClaimScreenState extends State<ClaimScreen> {
         phone: _phoneController.text.trim(),
       );
       if (!mounted) return;
-      setState(() {
-        _result = result;
-        _phase = _Phase.success;
-      });
+      await _handleClaimResult(result);
     } on RegistrationRequiredException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -122,6 +119,33 @@ class _ClaimScreenState extends State<ClaimScreen> {
       setState(() => _phase = _Phase.phoneEntry);
       _showNetworkError();
     }
+  }
+
+  Future<void> _handleClaimResult(ClaimResult result) async {
+    setState(() => _result = result);
+    if (result.requiresReview) {
+      await _showReviewSheet();
+      if (!mounted) return;
+    }
+    setState(() => _phase = _Phase.success);
+  }
+
+  Future<void> _showReviewSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => _ReviewSheet(
+        phone: _phoneController.text.trim(),
+        api: _api,
+        onDone: () => Navigator.pop(ctx),
+      ),
+    );
+    await Future.delayed(const Duration(seconds: 2));
   }
 
   Future<void> _submitSupplemental() async {
@@ -155,10 +179,7 @@ class _ClaimScreenState extends State<ClaimScreen> {
         pdpaConsent: req.needsConsent ? true : null,
       );
       if (!mounted) return;
-      setState(() {
-        _result = result;
-        _phase = _Phase.success;
-      });
+      await _handleClaimResult(result);
     } on RegistrationRequiredException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -715,13 +736,6 @@ class _SuccessViewState extends State<_SuccessView>
   String _fmt(double v) =>
       v == v.truncateToDouble() ? v.toInt().toString() : v.toStringAsFixed(2);
 
-  Future<void> _openReview() async {
-    final uri = Uri.parse('https://g.page/r/CciDQI8LclZEEBM/review');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -751,6 +765,7 @@ class _SuccessViewState extends State<_SuccessView>
           child: SlideTransition(
             position: _contentSlide,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const Text(
                   'Woohoo! You\'ve Earned',
@@ -784,54 +799,150 @@ class _SuccessViewState extends State<_SuccessView>
                 const Divider(color: Color(0xFFEEEEEE)),
                 const SizedBox(height: 20),
 
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: kOrangeBg,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.info_outline_rounded,
-                          color: kOrange, size: 18),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'How to redeem',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 15),
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: kOrangeBg,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.info_outline_rounded,
+                      color: kOrange, size: 18),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'How to redeem',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
                 const SizedBox(height: 10),
                 const Text(
                   'On your next visit, tell our staff your registered phone number at the counter. Your cashback will be applied to your bill automatically.',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                       color: Colors.grey, height: 1.6, fontSize: 14),
-                ),
-
-                const SizedBox(height: 32),
-
-                OutlinedButton.icon(
-                  onPressed: _openReview,
-                  icon: const Icon(Icons.star_border_rounded, size: 17),
-                  label: const Text('Leave us a Google Review'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFF5A623),
-                    side: const BorderSide(color: Color(0xFFFFD980)),
-                    backgroundColor: const Color(0xFFFFFBF2),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    textStyle: const TextStyle(fontSize: 13),
-                  ),
                 ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─── Review bottom sheet ──────────────────────────────────────────────────────
+
+class _ReviewSheet extends StatefulWidget {
+  final String phone;
+  final LoyaltyApiService api;
+  final VoidCallback onDone;
+
+  const _ReviewSheet({
+    required this.phone,
+    required this.api,
+    required this.onDone,
+  });
+
+  @override
+  State<_ReviewSheet> createState() => _ReviewSheetState();
+}
+
+class _ReviewSheetState extends State<_ReviewSheet> {
+  bool _loading = false;
+
+  Future<void> _openGoogleReview() async {
+    final uri = Uri.parse('https://g.page/r/CciDQI8LclZEEBM/review');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _onLeaveReview() async {
+    setState(() => _loading = true);
+    widget.api.confirmReview(widget.phone).ignore();
+    await _openGoogleReview();
+    widget.onDone();
+  }
+
+  void _onNoThanks() => widget.onDone();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 20, 28, 36),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFDDDDDD),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.star_rounded, color: Color(0xFFF5A623), size: 32),
+              Icon(Icons.star_rounded, color: Color(0xFFF5A623), size: 32),
+              Icon(Icons.star_rounded, color: Color(0xFFF5A623), size: 32),
+              Icon(Icons.star_rounded, color: Color(0xFFF5A623), size: 32),
+              Icon(Icons.star_rounded, color: Color(0xFFF5A623), size: 32),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Enjoying Kokonuts? 🥥',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Before you go — would you mind leaving us a quick Google review? It means the world to our team! 🙏',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.5),
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _loading ? null : _onLeaveReview,
+              icon: _loading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.star_rounded, size: 18),
+              label: const Text('Leave a Review'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                textStyle:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: _loading ? null : _onNoThanks,
+            child: const Text(
+              'No thank you',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

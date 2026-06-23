@@ -64,4 +64,15 @@ class LoyaltyApiService {
 
     throw ApiException(response.statusCode, response.body);
   }
+
+  Future<void> confirmReview(String phone) async {
+    await http.post(
+      Uri.parse('$_baseUrl/confirm_review'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({'phone': phone}),
+    );
+  }
 }

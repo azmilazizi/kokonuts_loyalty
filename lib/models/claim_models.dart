@@ -28,14 +28,20 @@ class ClaimValidation {
 class ClaimResult {
   final double pointsEarned;
   final double totalPoints;
+  final bool requiresReview;
 
-  const ClaimResult({required this.pointsEarned, required this.totalPoints});
+  const ClaimResult({
+    required this.pointsEarned,
+    required this.totalPoints,
+    this.requiresReview = false,
+  });
 
   factory ClaimResult.fromJson(Map<String, dynamic> json) {
     final data = (json['data'] as Map<String, dynamic>?) ?? json;
     return ClaimResult(
       pointsEarned: (data['points_earned'] as num).toDouble(),
       totalPoints: (data['total_points'] as num).toDouble(),
+      requiresReview: data['requires_review'] as bool? ?? false,
     );
   }
 }
