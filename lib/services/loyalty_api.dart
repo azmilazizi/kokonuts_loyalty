@@ -10,10 +10,15 @@ class ApiException implements Exception {
 }
 
 class LoyaltyApiService {
+  LoyaltyApiService({http.Client? client}) : _client = client ?? http.Client();
+  final http.Client _client;
+
+  void dispose() => _client.close();
+
   static const _baseUrl = 'https://crm.kokonuts.my/loyalty/api';
 
   Future<ClaimValidation> validateToken(String token) async {
-    final response = await http.get(
+    final response = await _client.get(
       Uri.parse('$_baseUrl/claim/$token'),
       headers: {'Accept': 'application/json'},
     );
@@ -42,7 +47,7 @@ class LoyaltyApiService {
     if (birthday != null && birthday.isNotEmpty) body['birthday'] = birthday;
     if (pdpaConsent != null) body['pdpa_consent'] = pdpaConsent;
 
-    final response = await http.post(
+    final response = await _client.post(
       Uri.parse('$_baseUrl/claim/$token'),
       headers: {
         'Content-Type': 'application/json',
@@ -65,14 +70,14 @@ class LoyaltyApiService {
     throw ApiException(response.statusCode, response.body);
   }
 
-  Future<void> confirmReview(String phone) async {
-    await http.post(
+  Future<void> confirmReview(String phone, {required String token}) async {
+    await _client.post(
       Uri.parse('$_baseUrl/confirm_review'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: jsonEncode({'phone': phone}),
+      body: jsonEncode({'phone': phone, 'token': token}),
     );
   }
 }

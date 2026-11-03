@@ -20,15 +20,16 @@ enum _Phase {
 
 class ClaimScreen extends StatefulWidget {
   final String token;
+  final LoyaltyApiService? api;
 
-  const ClaimScreen({super.key, required this.token});
+  const ClaimScreen({super.key, required this.token, this.api});
 
   @override
   State<ClaimScreen> createState() => _ClaimScreenState();
 }
 
 class _ClaimScreenState extends State<ClaimScreen> {
-  final _api = LoyaltyApiService();
+  late final LoyaltyApiService _api;
   final _phoneFormKey = GlobalKey<FormState>();
   final _supplementalFormKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
@@ -46,11 +47,13 @@ class _ClaimScreenState extends State<ClaimScreen> {
   @override
   void initState() {
     super.initState();
+    _api = widget.api ?? LoyaltyApiService();
     _validateToken();
   }
 
   @override
   void dispose() {
+    if (widget.api == null) _api.dispose();
     _phoneController.dispose();
     _nameController.dispose();
     _birthdayDisplayController.dispose();
@@ -122,12 +125,13 @@ class _ClaimScreenState extends State<ClaimScreen> {
   }
 
   Future<void> _handleClaimResult(ClaimResult result) async {
-    setState(() => _result = result);
-    if (result.requiresReview) {
+    setState(() {
+      _result = result;
+      _phase = _Phase.success;
+    });
+    if (result.requiresReview && result.branch.reviewUri != null) {
       await _showReviewSheet();
-      if (!mounted) return;
     }
-    setState(() => _phase = _Phase.success);
   }
 
   Future<void> _showReviewSheet() async {
@@ -142,10 +146,12 @@ class _ClaimScreenState extends State<ClaimScreen> {
       builder: (ctx) => _ReviewSheet(
         phone: _phoneController.text.trim(),
         api: _api,
+        token: widget.token,
+        reviewUri: _result!.branch.reviewUri!,
+        branchName: _result!.branch.name,
         onDone: () => Navigator.pop(ctx),
       ),
     );
-    await Future.delayed(const Duration(seconds: 2));
   }
 
   Future<void> _submitSupplemental() async {
@@ -345,6 +351,11 @@ class _ClaimScreenState extends State<ClaimScreen> {
           'Cashback waiting for you!',
           style: TextStyle(fontSize: 15, color: Colors.grey),
         ),
+        if (_validation!.branch.name?.isNotEmpty ?? false) ...[
+          const SizedBox(height: 10),
+          Text(_validation!.branch.name!, textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        ],
         if (_validation!.storeAddress != null) ...[
           const SizedBox(height: 10),
           Row(
@@ -836,11 +847,17 @@ class _ReviewSheet extends StatefulWidget {
   final String phone;
   final LoyaltyApiService api;
   final VoidCallback onDone;
+  final String token;
+  final Uri reviewUri;
+  final String? branchName;
 
   const _ReviewSheet({
     required this.phone,
     required this.api,
     required this.onDone,
+    required this.token,
+    required this.reviewUri,
+    this.branchName,
   });
 
   @override
@@ -850,18 +867,22 @@ class _ReviewSheet extends StatefulWidget {
 class _ReviewSheetState extends State<_ReviewSheet> {
   bool _loading = false;
 
-  Future<void> _openGoogleReview() async {
-    final uri = Uri.parse('https://g.page/r/CciDQI8LclZEEBM/review');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
   Future<void> _onLeaveReview() async {
     setState(() => _loading = true);
-    widget.api.confirmReview(widget.phone).ignore();
-    await _openGoogleReview();
-    widget.onDone();
+    try {
+      // Launch directly from the click so browser popup rules can allow it.
+      final opened = await launchUrl(widget.reviewUri, mode: LaunchMode.externalApplication);
+      if (!mounted) return;
+      if (!opened) throw StateError('Could not open Google');
+      widget.api.confirmReview(widget.phone, token: widget.token).ignore();
+      widget.onDone();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Could not open Google. Please try again, or choose No thank you.'),
+      ));
+    }
   }
 
   void _onNoThanks() => widget.onDone();
@@ -893,8 +914,10 @@ class _ReviewSheetState extends State<_ReviewSheet> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Enjoying Kokonuts? 🥥',
+          Text(
+            widget.branchName?.isNotEmpty ?? false
+                ? 'Share your experience at ${widget.branchName}'
+                : 'Share your Kokonuts experience',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
@@ -904,7 +927,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Before you go — would you mind leaving us a quick Google review? It means the world to our team! 🙏',
+            'Your cashback has been credited. Would you like to leave an optional Google review for this branch?',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.5),
           ),

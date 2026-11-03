@@ -1,9 +1,12 @@
+import 'claim_branch.dart';
+
 class ClaimValidation {
   final String status;
   final double? amount;
   final double? pointsToEarn;
   final String? receiptNumber;
   final String? storeAddress;
+  final ClaimBranch branch;
 
   const ClaimValidation({
     required this.status,
@@ -11,6 +14,7 @@ class ClaimValidation {
     this.pointsToEarn,
     this.receiptNumber,
     this.storeAddress,
+    this.branch = const ClaimBranch(),
   });
 
   factory ClaimValidation.fromJson(Map<String, dynamic> json) {
@@ -21,6 +25,7 @@ class ClaimValidation {
       pointsToEarn: (data['points_to_earn'] as num?)?.toDouble(),
       receiptNumber: data['receipt_number'] as String?,
       storeAddress: data['store_address'] as String?,
+      branch: ClaimBranch.fromJson(data),
     );
   }
 }
@@ -29,11 +34,13 @@ class ClaimResult {
   final double pointsEarned;
   final double totalPoints;
   final bool requiresReview;
+  final ClaimBranch branch;
 
   const ClaimResult({
     required this.pointsEarned,
     required this.totalPoints,
     this.requiresReview = false,
+    this.branch = const ClaimBranch(),
   });
 
   factory ClaimResult.fromJson(Map<String, dynamic> json) {
@@ -42,6 +49,7 @@ class ClaimResult {
       pointsEarned: (data['points_earned'] as num).toDouble(),
       totalPoints: (data['total_points'] as num).toDouble(),
       requiresReview: data['requires_review'] as bool? ?? false,
+      branch: ClaimBranch.fromJson(data),
     );
   }
 }
